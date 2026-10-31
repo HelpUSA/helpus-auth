@@ -14,15 +14,12 @@ jobs:
           node-version: '22'
       - name: Test Ed25519 lab JWT issuer and fail-closed auth (no external services)
         run: node --test test/g3bplus_jwt_auth.test.mjs
-      - name: Inspect and patch existing SPA npm lock in isolated runner
+      - name: Install and audit HelpUS Auth SPA dependency lock
         run: |
           npm ci --ignore-scripts --no-fund
-          npm audit fix --package-lock-only --ignore-scripts --no-fund
           npm audit --audit-level=moderate
-          echo G3BPLUS_AUTH_LOCK_BEGIN
-          sha256sum package-lock.json
-          base64 -w 960 package-lock.json | sed 's/^/G3BPLUS_AUTH_LOCK_B64 /'
-          echo G3BPLUS_AUTH_LOCK_END
+      - name: Typecheck and build existing Auth SPA unchanged
+        run: npm run build
 
       - name: Ensure production guard remains absolute
         run: |
