@@ -1,0 +1,26 @@
+name: G3-B+ Auth localhost JWT laboratory
+on:
+  push:
+    branches: ['feat/g3bplus-*']
+  pull_request:
+    branches: [master]
+jobs:
+  jwt-sandbox-only:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test Ed25519 lab JWT issuer and fail-closed auth (no external services)
+        run: node --test test/g3bplus_jwt_auth.test.mjs
+      - name: Install and audit HelpUS Auth SPA dependency lock
+        run: |
+          npm ci --ignore-scripts --no-fund
+          npm audit --audit-level=moderate
+      - name: Typecheck and build existing Auth SPA unchanged
+        run: npm run build
+
+      - name: Ensure production guard remains absolute
+        run: |
+          NODE_ENV=production HELPUS_G3BPLUS_LOCAL_ONLY=1 node -e "import('./sandbox/g3bplus_jwt_auth.mjs').then(({createG3BPlusAuthLab}) => { try { createG3BPlusAuthLab({bootstrapSecret:'a'.repeat(64)});process.exit(1); } catch(e) { if(e.message!=='G3BPLUS_LOCAL_ONLY_REQUIRED') process.exit(2); } })"
